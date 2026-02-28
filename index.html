@@ -1,61 +1,37 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Kasir Dimsum Beraga</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<style>
-body { font-family: Arial; padding:20px; }
-button { padding:10px; margin:5px 0; width:100%; border:none; border-radius:8px; }
-.menu-btn { background:#f4f4f4; }
-.tunai { background:#28a745; color:white; }
-.qr { background:#007bff; color:white; }
-.tutup { background:#dc3545; color:white; }
-.summary { margin-top:20px; background:#f4f4f4; padding:10px; border-radius:8px; }
-</style>
-</head>
-<body>
-
-<h2>Kasir & Pembukuan Dimsum Beraga</h2>
-
-<p><strong>Tanggal:</strong> <span id="tanggal"></span></p>
-<p><strong>Jam Buka:</strong> <span id="jamBuka"></span></p>
-<p><strong>Jam Tutup:</strong> <span id="jamTutup">-</span></p>
-
-<hr>
-
-<h3>Pilih Menu</h3>
-
-<button class="menu-btn" onclick="pilihMenu('Dimsum Ayam',15000)">Dimsum Ayam - 15.000</button>
-<button class="menu-btn" onclick="pilihMenu('Dimsum Udang',18000)">Dimsum Udang - 18.000</button>
-<button class="menu-btn" onclick="pilihMenu('Lumpia',12000)">Lumpia - 12.000</button>
-
-<hr>
-
-<h3>Pilih Pembayaran</h3>
-<button class="tunai" onclick="bayar('Tunai')">Tunai</button>
-<button class="qr" onclick="bayar('QR')">QR</button>
-
-<button class="tutup" onclick="tutupToko()">Tutup Toko</button>
-
-<div class="summary">
-<h3>Rekap Hari Ini</h3>
-<p>Total Tunai: Rp <span id="totalTunai">0</span></p>
-<p>Total QR: Rp <span id="totalQR">0</span></p>
-<p><strong>Total Omzet: Rp <span id="totalOmzet">0</span></strong></p>
-</div>
-
-<button onclick="exportPDF()">Download Pembukuan PDF</button>
-
 <script>
 let totalTunai = 0;
 let totalQR = 0;
 let transaksi = [];
 let menuDipilih = null;
 
+function simpanData(){
+localStorage.setItem("totalTunai", totalTunai);
+localStorage.setItem("totalQR", totalQR);
+localStorage.setItem("transaksi", JSON.stringify(transaksi));
+}
+
+function loadData(){
+totalTunai = parseInt(localStorage.getItem("totalTunai")) || 0;
+totalQR = parseInt(localStorage.getItem("totalQR")) || 0;
+transaksi = JSON.parse(localStorage.getItem("transaksi")) || [];
+
+document.getElementById("totalTunai").innerText = totalTunai;
+document.getElementById("totalQR").innerText = totalQR;
+document.getElementById("totalOmzet").innerText = totalTunai + totalQR;
+}
+
 let sekarang = new Date();
-document.getElementById("tanggal").innerText = sekarang.toLocaleDateString();
-document.getElementById("jamBuka").innerText = sekarang.toLocaleTimeString();
+
+if(!localStorage.getItem("jamBuka")){
+localStorage.setItem("jamBuka", sekarang.toLocaleTimeString());
+localStorage.setItem("tanggal", sekarang.toLocaleDateString());
+}
+
+document.getElementById("tanggal").innerText = localStorage.getItem("tanggal");
+document.getElementById("jamBuka").innerText = localStorage.getItem("jamBuka");
+document.getElementById("jamTutup").innerText = localStorage.getItem("jamTutup") || "-";
+
+loadData();
 
 function pilihMenu(nama,harga){
 menuDipilih = {nama,harga};
@@ -87,35 +63,17 @@ document.getElementById("totalQR").innerText = totalQR;
 document.getElementById("totalOmzet").innerText = totalTunai + totalQR;
 
 menuDipilih = null;
+simpanData();
 }
 
 function tutupToko(){
-let tutup = new Date();
-document.getElementById("jamTutup").innerText = tutup.toLocaleTimeString();
+let tutup = new Date().toLocaleTimeString();
+localStorage.setItem("jamTutup", tutup);
+document.getElementById("jamTutup").innerText = tutup;
 }
 
-function exportPDF(){
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF();
-
-doc.text("Pembukuan Harian Dimsum Beraga", 10, 10);
-doc.text("Tanggal: " + document.getElementById("tanggal").innerText, 10, 20);
-doc.text("Jam Buka: " + document.getElementById("jamBuka").innerText, 10, 30);
-doc.text("Jam Tutup: " + document.getElementById("jamTutup").innerText, 10, 40);
-
-let y = 50;
-transaksi.forEach((t,i)=>{
-doc.text((i+1)+". "+t.nama+" | "+t.metode+" | Rp "+t.total, 10, y);
-y += 10;
-});
-
-doc.text("Total Tunai: Rp " + totalTunai, 10, y+10);
-doc.text("Total QR: Rp " + totalQR, 10, y+20);
-doc.text("Total Omzet: Rp " + (totalTunai+totalQR), 10, y+30);
-
-doc.save("Pembukuan-Dimsum-Beraga.pdf");
+function resetData(){
+localStorage.clear();
+location.reload();
 }
 </script>
-
-</body>
-</html>
