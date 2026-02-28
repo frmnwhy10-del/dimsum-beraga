@@ -6,39 +6,37 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 body { font-family: Arial; padding:20px; }
-input, select, button { padding:8px; margin:5px 0; width:100%; }
-button { background:#28a745; color:white; border:none; }
-.summary { margin-top:20px; background:#f4f4f4; padding:10px; }
+button { padding:10px; margin:5px 0; width:100%; border:none; border-radius:8px; }
+.menu-btn { background:#f4f4f4; }
+.tunai { background:#28a745; color:white; }
+.qr { background:#007bff; color:white; }
+.tutup { background:#dc3545; color:white; }
+.summary { margin-top:20px; background:#f4f4f4; padding:10px; border-radius:8px; }
 </style>
 </head>
 <body>
 
-<h2>Kasir & Pembukuan Harian</h2>
+<h2>Kasir & Pembukuan Dimsum Beraga</h2>
 
-<label>Jam Buka:</label>
-<input type="time" id="jamBuka">
-
-<label>Jam Tutup:</label>
-<input type="time" id="jamTutup">
+<p><strong>Tanggal:</strong> <span id="tanggal"></span></p>
+<p><strong>Jam Buka:</strong> <span id="jamBuka"></span></p>
+<p><strong>Jam Tutup:</strong> <span id="jamTutup">-</span></p>
 
 <hr>
 
-<label>Nama Menu:</label>
-<input type="text" id="menu">
+<h3>Pilih Menu</h3>
 
-<label>Harga:</label>
-<input type="number" id="harga">
+<button class="menu-btn" onclick="pilihMenu('Dimsum Ayam',15000)">Dimsum Ayam - 15.000</button>
+<button class="menu-btn" onclick="pilihMenu('Dimsum Udang',18000)">Dimsum Udang - 18.000</button>
+<button class="menu-btn" onclick="pilihMenu('Lumpia',12000)">Lumpia - 12.000</button>
 
-<label>Jumlah:</label>
-<input type="number" id="jumlah">
+<hr>
 
-<label>Pembayaran:</label>
-<select id="metode">
-<option value="Tunai">Tunai</option>
-<option value="QR">QR</option>
-</select>
+<h3>Pilih Pembayaran</h3>
+<button class="tunai" onclick="bayar('Tunai')">Tunai</button>
+<button class="qr" onclick="bayar('QR')">QR</button>
 
-<button onclick="tambahTransaksi()">Tambah Transaksi</button>
+<button class="tutup" onclick="tutupToko()">Tutup Toko</button>
 
 <div class="summary">
 <h3>Rekap Hari Ini</h3>
@@ -53,14 +51,24 @@ button { background:#28a745; color:white; border:none; }
 let totalTunai = 0;
 let totalQR = 0;
 let transaksi = [];
+let menuDipilih = null;
 
-function tambahTransaksi(){
-let menu = document.getElementById("menu").value;
-let harga = parseInt(document.getElementById("harga").value);
-let jumlah = parseInt(document.getElementById("jumlah").value);
-let metode = document.getElementById("metode").value;
+let sekarang = new Date();
+document.getElementById("tanggal").innerText = sekarang.toLocaleDateString();
+document.getElementById("jamBuka").innerText = sekarang.toLocaleTimeString();
 
-let total = harga * jumlah;
+function pilihMenu(nama,harga){
+menuDipilih = {nama,harga};
+alert("Menu dipilih: " + nama);
+}
+
+function bayar(metode){
+if(!menuDipilih){
+alert("Pilih menu dulu!");
+return;
+}
+
+let total = menuDipilih.harga;
 
 if(metode === "Tunai"){
 totalTunai += total;
@@ -68,31 +76,36 @@ totalTunai += total;
 totalQR += total;
 }
 
-transaksi.push({menu, harga, jumlah, metode, total});
+transaksi.push({
+nama: menuDipilih.nama,
+metode: metode,
+total: total
+});
 
 document.getElementById("totalTunai").innerText = totalTunai;
 document.getElementById("totalQR").innerText = totalQR;
 document.getElementById("totalOmzet").innerText = totalTunai + totalQR;
 
-document.getElementById("menu").value="";
-document.getElementById("harga").value="";
-document.getElementById("jumlah").value="";
+menuDipilih = null;
+}
+
+function tutupToko(){
+let tutup = new Date();
+document.getElementById("jamTutup").innerText = tutup.toLocaleTimeString();
 }
 
 function exportPDF(){
 const { jsPDF } = window.jspdf;
 const doc = new jsPDF();
 
-let jamBuka = document.getElementById("jamBuka").value;
-let jamTutup = document.getElementById("jamTutup").value;
-
 doc.text("Pembukuan Harian Dimsum Beraga", 10, 10);
-doc.text("Jam Buka: " + jamBuka, 10, 20);
-doc.text("Jam Tutup: " + jamTutup, 10, 30);
+doc.text("Tanggal: " + document.getElementById("tanggal").innerText, 10, 20);
+doc.text("Jam Buka: " + document.getElementById("jamBuka").innerText, 10, 30);
+doc.text("Jam Tutup: " + document.getElementById("jamTutup").innerText, 10, 40);
 
-let y = 40;
+let y = 50;
 transaksi.forEach((t,i)=>{
-doc.text((i+1)+". "+t.menu+" | "+t.metode+" | Rp "+t.total, 10, y);
+doc.text((i+1)+". "+t.nama+" | "+t.metode+" | Rp "+t.total, 10, y);
 y += 10;
 });
 
@@ -100,7 +113,7 @@ doc.text("Total Tunai: Rp " + totalTunai, 10, y+10);
 doc.text("Total QR: Rp " + totalQR, 10, y+20);
 doc.text("Total Omzet: Rp " + (totalTunai+totalQR), 10, y+30);
 
-doc.save("Pembukuan-Harian-Dimsum-Beraga.pdf");
+doc.save("Pembukuan-Dimsum-Beraga.pdf");
 }
 </script>
 
