@@ -1,75 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Kasir Dimsum Beraga</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<style>
-body { font-family: Arial; padding: 15px; background:#fff8f0; }
-h2 { text-align:center; color:#c0392b; }
-
-.menu button {
-  width:48%; margin:1%; padding:10px;
-  background:#e67e22; color:white; border:none;
-}
-
-table { width:100%; margin-top:10px; border-collapse:collapse; }
-th, td { border:1px solid #ccc; padding:5px; text-align:center; }
-
-.total { font-size:18px; font-weight:bold; margin-top:10px; }
-
-button { padding:10px; margin-top:5px; width:100%; border:none; }
-
-.export { background:#27ae60; color:white; }
-.reset { background:#c0392b; color:white; }
-.bayar { background:#2980b9; color:white; }
-
-select { padding:8px; width:100%; margin-top:5px; }
-</style>
-</head>
-
-<body>
-
-<h2>🍜 Kasir Dimsum Beraga</h2>
-
-<div class="menu">
-<button onclick="tambah('Dimsum Ayam',15000)">Dimsum Ayam - 15k</button>
-<button onclick="tambah('Dimsum Udang',18000)">Dimsum Udang - 18k</button>
-<button onclick="tambah('Hakau',20000)">Hakau - 20k</button>
-<button onclick="tambah('Siomay Kepiting',17000)">Siomay Kepiting - 17k</button>
-<button onclick="tambah('Es Teh',5000)">Es Teh - 5k</button>
-<button onclick="tambah('Teh Hangat',4000)">Teh Hangat - 4k</button>
-</div>
-
-<table>
-<thead>
-<tr>
-<th>Menu</th>
-<th>Harga</th>
-<th>Qty</th>
-<th>Subtotal</th>
-</tr>
-</thead>
-<tbody id="tabel"></tbody>
-</table>
-
-<div class="total">Total: Rp <span id="total">0</span></div>
-
-<select id="metode">
-<option value="Tunai">Tunai</option>
-<option value="QRIS">QRIS</option>
-</select>
-
-<button class="bayar" onclick="prosesPembayaran()">Proses Pembayaran</button>
-<button class="export" onclick="downloadPDF()">Download Rekap Harian PDF</button>
-<button class="reset" onclick="resetKasir()">Reset Semua Data</button>
-
-<h3>📊 Rekap Hari Ini</h3>
-<p>Total Penghasilan: Rp <span id="totalHarian">0</span></p>
-<p>Total Tunai: Rp <span id="totalTunai">0</span></p>
-<p>Total QRIS: Rp <span id="totalQRIS">0</span></p>
-
 <script>
 let data = {};
 let total = 0;
@@ -117,10 +45,17 @@ function prosesPembayaran() {
     let metode = document.getElementById("metode").value;
     let waktu = new Date().toLocaleString();
 
+    // Buat detail pesanan
+    let detailPesanan = "";
+    for (let item in data) {
+        detailPesanan += `${item} (${data[item].qty}x), `;
+    }
+
     riwayat.push({
         waktu: waktu,
         metode: metode,
-        total: total
+        total: total,
+        detail: detailPesanan
     });
 
     totalHarian += total;
@@ -141,6 +76,23 @@ function updateRekap() {
     document.getElementById("totalHarian").innerText = totalHarian;
     document.getElementById("totalTunai").innerText = totalTunai;
     document.getElementById("totalQRIS").innerText = totalQRIS;
+
+    // Tampilkan riwayat detail di bawah rekap
+    let html = "";
+    riwayat.forEach((trx, index) => {
+        html += `
+        <p>
+        <b>${index+1}.</b> ${trx.waktu} <br>
+        Pesanan: ${trx.detail} <br>
+        Metode: ${trx.metode} <br>
+        Total: Rp ${trx.total}
+        </p>
+        <hr>`;
+    });
+
+    if (document.getElementById("riwayatTransaksi")) {
+        document.getElementById("riwayatTransaksi").innerHTML = html;
+    }
 }
 
 function downloadPDF() {
@@ -153,17 +105,17 @@ function downloadPDF() {
     let y = 30;
 
     riwayat.forEach((trx, index) => {
-        doc.text(
-            `${index+1}. ${trx.waktu} | ${trx.metode} | Rp ${trx.total}`,
-            10,
-            y
-        );
-        y += 10;
+        doc.text(`${index+1}. ${trx.waktu}`, 10, y);
+        y += 8;
+        doc.text(`Pesanan: ${trx.detail}`, 10, y);
+        y += 8;
+        doc.text(`Metode: ${trx.metode} | Total: Rp ${trx.total}`, 10, y);
+        y += 12;
     });
 
-    doc.text(`Total Harian: Rp ${totalHarian}`, 10, y + 10);
-    doc.text(`Tunai: Rp ${totalTunai}`, 10, y + 20);
-    doc.text(`QRIS: Rp ${totalQRIS}`, 10, y + 30);
+    doc.text(`Total Harian: Rp ${totalHarian}`, 10, y + 5);
+    doc.text(`Tunai: Rp ${totalTunai}`, 10, y + 12);
+    doc.text(`QRIS: Rp ${totalQRIS}`, 10, y + 19);
 
     doc.save("rekap_harian_dimsum_beraga.pdf");
 }
@@ -179,6 +131,3 @@ function resetKasir() {
     updateRekap();
 }
 </script>
-
-</body>
-</html>
