@@ -3,32 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kasir Dimsum Beraga Mobile PRO FINAL</title>
+<title>Kasir Dimsum Beraga Mobile PRO</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body{font-family:Arial;margin:0;padding:10px;background:#fff8f0;}
-h2{text-align:center;color:#c0392b;}
-
-.menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.menu button{
-padding:18px;font-size:16px;border:none;
-border-radius:10px;background:#e67e22;color:white;
+body{
+  font-family:Arial;
+  margin:0;
+  padding:10px;
+  background:#fff8f0;
 }
 
-table{width:100%;margin-top:10px;font-size:14px;}
-th,td{border-bottom:1px solid #ddd;padding:5px;text-align:center;}
+h2{text-align:center;color:#c0392b;}
 
-.total{font-size:20px;font-weight:bold;text-align:center;margin-top:10px;}
+.menu{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.menu button{
+  padding:18px;
+  font-size:16px;
+  border:none;
+  border-radius:10px;
+  background:#e67e22;
+  color:white;
+}
+
+table{
+  width:100%;
+  margin-top:10px;
+  font-size:14px;
+}
+
+th,td{
+  border-bottom:1px solid #ddd;
+  padding:5px;
+  text-align:center;
+}
+
+.total{
+  font-size:20px;
+  font-weight:bold;
+  text-align:center;
+  margin-top:10px;
+}
 
 input{
-width:100%;padding:12px;font-size:16px;
-margin-top:10px;border-radius:8px;border:1px solid #ccc;
+  width:100%;
+  padding:12px;
+  font-size:16px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
 }
 
 .btn{
-width:100%;padding:18px;font-size:18px;
-border:none;border-radius:10px;margin-top:10px;color:white;
+  width:100%;
+  padding:18px;
+  font-size:18px;
+  border:none;
+  border-radius:10px;
+  margin-top:10px;
+  color:white;
 }
 
 .tunai{background:#2980b9;}
@@ -37,8 +75,45 @@ border:none;border-radius:10px;margin-top:10px;color:white;
 .reset{background:#c0392b;}
 
 .struk{
-background:white;margin-top:15px;
-padding:10px;border:1px dashed black;font-size:13px;
+  background:white;
+  margin-top:15px;
+  padding:10px;
+  border:1px dashed black;
+  font-size:13px;
+}
+
+.summary-box{
+  background:#ffe8d6;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:15px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+
+.rekap-card{
+  background:white;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:12px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.1);
+  font-size:14px;
+}
+
+.rekap-header{
+  font-weight:bold;
+  color:#c0392b;
+  margin-bottom:6px;
+}
+
+.rekap-total{
+  font-weight:bold;
+  margin-top:6px;
+  color:#27ae60;
+}
+
+.rekap-metode{
+  font-size:13px;
+  color:#555;
 }
 </style>
 </head>
@@ -143,7 +218,6 @@ function prosesPembayaran(metode){
   document.getElementById("kembalian").innerText=formatRupiah(kembalian);
 
   let waktu=new Date().toLocaleString();
-
   let pesananCopy=JSON.parse(JSON.stringify(data));
 
   let detailStr="";
@@ -152,29 +226,23 @@ function prosesPembayaran(metode){
   }
 
   lastStruk=`
-    <div class="struk">
-    <center><b>Dimsum Beraga</b></center>
-    ${waktu}<br><br>
-    ${detailStr}
-    ----------------<br>
-    Total: ${formatRupiah(total)}<br>
-    Bayar: ${formatRupiah(bayar)}<br>
-    Kembali: ${formatRupiah(kembalian)}<br>
-    Metode: ${metode}<br>
-    ----------------<br>
-    Terima Kasih 🙏
-    </div>
+  <div class="struk">
+  <center><b>Dimsum Beraga</b></center>
+  ${waktu}<br><br>
+  ${detailStr}
+  ----------------<br>
+  Total: ${formatRupiah(total)}<br>
+  Bayar: ${formatRupiah(bayar)}<br>
+  Kembali: ${formatRupiah(kembalian)}<br>
+  Metode: ${metode}<br>
+  ----------------<br>
+  Terima Kasih 🙏
+  </div>
   `;
 
   document.getElementById("strukArea").innerHTML=lastStruk;
 
-  riwayat.push({
-    waktu:waktu,
-    metode:metode,
-    total:total,
-    pesanan:pesananCopy
-  });
-
+  riwayat.push({waktu,metode,total,pesanan:pesananCopy});
   totalHarian+=total;
   if(metode==="Tunai") totalTunai+=total;
   else totalQRIS+=total;
@@ -187,22 +255,39 @@ function prosesPembayaran(metode){
 }
 
 function updateRekap(){
+
   let html=`
-  Total Harian: ${formatRupiah(totalHarian)}<br>
-  Tunai: ${formatRupiah(totalTunai)}<br>
-  QRIS: ${formatRupiah(totalQRIS)}<br><br>
-  <b>Detail Transaksi:</b><br><br>
+  <div class="summary-box">
+    <b>📊 Ringkasan Hari Ini</b><br><br>
+    Total Harian: ${formatRupiah(totalHarian)}<br>
+    💵 Tunai: ${formatRupiah(totalTunai)}<br>
+    📱 QRIS: ${formatRupiah(totalQRIS)}
+  </div>
   `;
 
-  riwayat.forEach((trx,i)=>{
-    html+=`${i+1}. ${trx.waktu}<br>`;
-    for(let item in trx.pesanan){
-      html+=`${item} (${trx.pesanan[item].qty}x)<br>`;
-    }
+  riwayat.slice().reverse().forEach((trx,i)=>{
     html+=`
-    Metode: ${trx.metode}<br>
-    Total: ${formatRupiah(trx.total)}<br>
-    ----------------<br>
+    <div class="rekap-card">
+      <div class="rekap-header">
+        🧾 Transaksi ${riwayat.length - i}
+      </div>
+      <div style="font-size:12px;color:#777;">
+        ${trx.waktu}
+      </div><br>
+    `;
+
+    for(let item in trx.pesanan){
+      html+=`• ${item} (${trx.pesanan[item].qty}x)<br>`;
+    }
+
+    html+=`
+      <div class="rekap-metode">
+        Metode: ${trx.metode}
+      </div>
+      <div class="rekap-total">
+        Total: ${formatRupiah(trx.total)}
+      </div>
+    </div>
     `;
   });
 
@@ -213,20 +298,16 @@ function downloadPDF(){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF();
   doc.text("Rekap Harian Dimsum Beraga",10,10);
-
   let y=20;
 
   riwayat.forEach((trx,i)=>{
     doc.text(`${i+1}. ${trx.waktu}`,10,y); y+=8;
-
     for(let item in trx.pesanan){
       doc.text(`${item} (${trx.pesanan[item].qty}x)`,15,y);
       y+=8;
     }
-
     doc.text(`Metode: ${trx.metode}`,10,y); y+=8;
     doc.text(`Total: ${formatRupiah(trx.total)}`,10,y); y+=12;
-
     if(y>270){ doc.addPage(); y=10; }
   });
 
