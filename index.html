@@ -1,109 +1,126 @@
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
 
-let totalTunai = 0;
-let totalQR = 0;
-let transaksi = [];
-let menuDipilih = null;
+  let totalTunai = 0;
+  let totalQR = 0;
+  let transaksi = [];
+  let menuDipilih = null;
 
-let daftarMenu = [
-  {nama: "Dimsum Ayam", harga: 15000},
-  {nama: "Dimsum Udang", harga: 18000},
-  {nama: "Lumpia", harga: 12000},
-  {nama: "Siomay", harga: 14000},
-  {nama: "Es Teh", harga: 5000}
-];
+  // ================== DAFTAR MENU ==================
+  const daftarMenu = [
+    { nama: "Dimsum Ayam", harga: 15000 },
+    { nama: "Dimsum Udang", harga: 18000 },
+    { nama: "Lumpia", harga: 12000 },
+    { nama: "Siomay", harga: 14000 },
+    { nama: "Es Teh", harga: 5000 }
+  ];
 
-function simpanData(){
-  localStorage.setItem("totalTunai", totalTunai);
-  localStorage.setItem("totalQR", totalQR);
-  localStorage.setItem("transaksi", JSON.stringify(transaksi));
-}
-
-function loadData(){
-  totalTunai = parseInt(localStorage.getItem("totalTunai")) || 0;
-  totalQR = parseInt(localStorage.getItem("totalQR")) || 0;
-  transaksi = JSON.parse(localStorage.getItem("transaksi")) || [];
-
-  document.getElementById("totalTunai").innerText = totalTunai;
-  document.getElementById("totalQR").innerText = totalQR;
-  document.getElementById("totalOmzet").innerText = totalTunai + totalQR;
-}
-
-let sekarang = new Date();
-
-if(!localStorage.getItem("jamBuka")){
-  localStorage.setItem("jamBuka", sekarang.toLocaleTimeString());
-  localStorage.setItem("tanggal", sekarang.toLocaleDateString());
-}
-
-document.getElementById("tanggal").innerText = localStorage.getItem("tanggal");
-document.getElementById("jamBuka").innerText = localStorage.getItem("jamBuka");
-document.getElementById("jamTutup").innerText = localStorage.getItem("jamTutup") || "-";
-
-function tampilkanMenu(){
-  let container = document.getElementById("menuContainer");
-  if(!container) return;
-
-  daftarMenu.forEach(item => {
-    let btn = document.createElement("button");
-    btn.innerText = item.nama + " - Rp " + item.harga;
-    btn.style.width = "100%";
-    btn.style.marginBottom = "5px";
-    btn.style.padding = "10px";
-    btn.style.borderRadius = "8px";
-    btn.style.background = "#f4f4f4";
-
-    btn.onclick = function(){
-      menuDipilih = item;
-      alert("Menu dipilih: " + item.nama);
-    };
-
-    container.appendChild(btn);
-  });
-}
-
-loadData();
-tampilkanMenu();
-
-window.bayar = function(metode){
-  if(!menuDipilih){
-    alert("Pilih menu dulu!");
-    return;
+  // ================== SIMPAN DATA ==================
+  function simpanData() {
+    localStorage.setItem("totalTunai", totalTunai);
+    localStorage.setItem("totalQR", totalQR);
+    localStorage.setItem("transaksi", JSON.stringify(transaksi));
   }
 
-  let total = menuDipilih.harga;
+  // ================== LOAD DATA ==================
+  function loadData() {
+    totalTunai = parseInt(localStorage.getItem("totalTunai")) || 0;
+    totalQR = parseInt(localStorage.getItem("totalQR")) || 0;
+    transaksi = JSON.parse(localStorage.getItem("transaksi")) || [];
 
-  if(metode === "Tunai"){
-    totalTunai += total;
-  } else {
-    totalQR += total;
+    document.getElementById("totalTunai").innerText = totalTunai;
+    document.getElementById("totalQR").innerText = totalQR;
+    document.getElementById("totalOmzet").innerText = totalTunai + totalQR;
   }
 
-  transaksi.push({
-    nama: menuDipilih.nama,
-    metode: metode,
-    total: total
-  });
+  // ================== TANGGAL & JAM ==================
+  const sekarang = new Date();
 
-  document.getElementById("totalTunai").innerText = totalTunai;
-  document.getElementById("totalQR").innerText = totalQR;
-  document.getElementById("totalOmzet").innerText = totalTunai + totalQR;
+  if (!localStorage.getItem("jamBuka")) {
+    localStorage.setItem("jamBuka", sekarang.toLocaleTimeString());
+    localStorage.setItem("tanggal", sekarang.toLocaleDateString());
+  }
 
-  menuDipilih = null;
-  simpanData();
-};
+  document.getElementById("tanggal").innerText =
+    localStorage.getItem("tanggal");
 
-window.tutupToko = function(){
-  let tutup = new Date().toLocaleTimeString();
-  localStorage.setItem("jamTutup", tutup);
-  document.getElementById("jamTutup").innerText = tutup;
-};
+  document.getElementById("jamBuka").innerText =
+    localStorage.getItem("jamBuka");
 
-window.resetData = function(){
-  localStorage.clear();
-  location.reload();
-};
+  document.getElementById("jamTutup").innerText =
+    localStorage.getItem("jamTutup") || "-";
+
+  // ================== TAMPILKAN MENU ==================
+  function tampilkanMenu() {
+    const container = document.getElementById("menuContainer");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    daftarMenu.forEach(function (item) {
+      const btn = document.createElement("button");
+      btn.innerText = item.nama + " - Rp " + item.harga;
+      btn.style.width = "100%";
+      btn.style.marginBottom = "5px";
+      btn.style.padding = "10px";
+      btn.style.borderRadius = "8px";
+      btn.style.background = "#f4f4f4";
+
+      btn.onclick = function () {
+        menuDipilih = item;
+        alert("Menu dipilih: " + item.nama);
+      };
+
+      container.appendChild(btn);
+    });
+  }
+
+  // ================== BAYAR ==================
+  window.bayar = function (metode) {
+    if (!menuDipilih) {
+      alert("Pilih menu dulu!");
+      return;
+    }
+
+    const total = menuDipilih.harga;
+
+    if (metode === "Tunai") {
+      totalTunai += total;
+    } else {
+      totalQR += total;
+    }
+
+    transaksi.push({
+      nama: menuDipilih.nama,
+      metode: metode,
+      total: total
+    });
+
+    document.getElementById("totalTunai").innerText = totalTunai;
+    document.getElementById("totalQR").innerText = totalQR;
+    document.getElementById("totalOmzet").innerText =
+      totalTunai + totalQR;
+
+    menuDipilih = null;
+    simpanData();
+  };
+
+  // ================== TUTUP TOKO ==================
+  window.tutupToko = function () {
+    const tutup = new Date().toLocaleTimeString();
+    localStorage.setItem("jamTutup", tutup);
+    document.getElementById("jamTutup").innerText = tutup;
+  };
+
+  // ================== RESET ==================
+  window.resetData = function () {
+    localStorage.clear();
+    location.reload();
+  };
+
+  // ================== INIT ==================
+  loadData();
+  tampilkanMenu();
 
 });
 </script>
