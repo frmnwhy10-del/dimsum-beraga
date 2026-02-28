@@ -4,21 +4,31 @@
 <meta charset="UTF-8">
 <title>Kasir Dimsum Beraga</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
 body { font-family: Arial; padding: 15px; background:#fff8f0; }
 h2 { text-align:center; color:#c0392b; }
+
 .menu button {
   width:48%; margin:1%; padding:10px;
   background:#e67e22; color:white; border:none;
 }
+
 table { width:100%; margin-top:10px; border-collapse:collapse; }
 th, td { border:1px solid #ccc; padding:5px; text-align:center; }
+
 .total { font-size:18px; font-weight:bold; margin-top:10px; }
+
 button { padding:10px; margin-top:5px; width:100%; border:none; }
+
 .export { background:#27ae60; color:white; }
 .reset { background:#c0392b; color:white; }
+.bayar { background:#2980b9; color:white; }
+
+select { padding:8px; width:100%; margin-top:5px; }
 </style>
 </head>
+
 <body>
 
 <h2>🍜 Kasir Dimsum Beraga</h2>
@@ -46,12 +56,28 @@ button { padding:10px; margin-top:5px; width:100%; border:none; }
 
 <div class="total">Total: Rp <span id="total">0</span></div>
 
-<button class="export" onclick="downloadPDF()">Download Rekap PDF</button>
-<button class="reset" onclick="resetKasir()">Reset Transaksi</button>
+<select id="metode">
+<option value="Tunai">Tunai</option>
+<option value="QRIS">QRIS</option>
+</select>
+
+<button class="bayar" onclick="prosesPembayaran()">Proses Pembayaran</button>
+<button class="export" onclick="downloadPDF()">Download Rekap Harian PDF</button>
+<button class="reset" onclick="resetKasir()">Reset Semua Data</button>
+
+<h3>📊 Rekap Hari Ini</h3>
+<p>Total Penghasilan: Rp <span id="totalHarian">0</span></p>
+<p>Total Tunai: Rp <span id="totalTunai">0</span></p>
+<p>Total QRIS: Rp <span id="totalQRIS">0</span></p>
 
 <script>
 let data = {};
 let total = 0;
+
+let riwayat = [];
+let totalHarian = 0;
+let totalTunai = 0;
+let totalQRIS = 0;
 
 function tambah(nama, harga) {
     if (!data[nama]) {
@@ -65,9 +91,11 @@ function tambah(nama, harga) {
 function render() {
     let tabel = "";
     total = 0;
+
     for (let item in data) {
         let subtotal = data[item].harga * data[item].qty;
         total += subtotal;
+
         tabel += `<tr>
             <td>${item}</td>
             <td>${data[item].harga}</td>
@@ -75,8 +103,44 @@ function render() {
             <td>${subtotal}</td>
         </tr>`;
     }
+
     document.getElementById("tabel").innerHTML = tabel;
     document.getElementById("total").innerText = total;
+}
+
+function prosesPembayaran() {
+    if (total === 0) {
+        alert("Belum ada pesanan!");
+        return;
+    }
+
+    let metode = document.getElementById("metode").value;
+    let waktu = new Date().toLocaleString();
+
+    riwayat.push({
+        waktu: waktu,
+        metode: metode,
+        total: total
+    });
+
+    totalHarian += total;
+
+    if (metode === "Tunai") {
+        totalTunai += total;
+    } else {
+        totalQRIS += total;
+    }
+
+    updateRekap();
+    data = {};
+    total = 0;
+    render();
+}
+
+function updateRekap() {
+    document.getElementById("totalHarian").innerText = totalHarian;
+    document.getElementById("totalTunai").innerText = totalTunai;
+    document.getElementById("totalQRIS").innerText = totalQRIS;
 }
 
 function downloadPDF() {
@@ -84,23 +148,35 @@ function downloadPDF() {
     const doc = new jsPDF();
 
     doc.text("Dimsum Beraga", 10, 10);
-    doc.text("Rekap Transaksi", 10, 20);
+    doc.text("Rekap Transaksi Harian", 10, 20);
 
     let y = 30;
-    for (let item in data) {
-        let subtotal = data[item].harga * data[item].qty;
-        doc.text(`${item} - ${data[item].qty} x ${data[item].harga} = ${subtotal}`, 10, y);
-        y += 10;
-    }
 
-    doc.text(`Total: Rp ${total}`, 10, y + 10);
-    doc.save("rekap_dimsum_beraga.pdf");
+    riwayat.forEach((trx, index) => {
+        doc.text(
+            `${index+1}. ${trx.waktu} | ${trx.metode} | Rp ${trx.total}`,
+            10,
+            y
+        );
+        y += 10;
+    });
+
+    doc.text(`Total Harian: Rp ${totalHarian}`, 10, y + 10);
+    doc.text(`Tunai: Rp ${totalTunai}`, 10, y + 20);
+    doc.text(`QRIS: Rp ${totalQRIS}`, 10, y + 30);
+
+    doc.save("rekap_harian_dimsum_beraga.pdf");
 }
 
 function resetKasir() {
     data = {};
+    riwayat = [];
     total = 0;
+    totalHarian = 0;
+    totalTunai = 0;
+    totalQRIS = 0;
     render();
+    updateRekap();
 }
 </script>
 
