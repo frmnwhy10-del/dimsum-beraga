@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kasir Dimsum Beraga Mobile PRO</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<title>Kasir Dimsum Beraga Offline</title>
 
 <style>
 body{
@@ -71,23 +70,14 @@ input{
 
 .tunai{background:#2980b9;}
 .qris{background:#8e44ad;}
-.rekap{background:#27ae60;}
+.print{background:#27ae60;}
 .reset{background:#c0392b;}
-
-.struk{
-  background:white;
-  margin-top:15px;
-  padding:10px;
-  border:1px dashed black;
-  font-size:13px;
-}
 
 .summary-box{
   background:#ffe8d6;
   padding:12px;
   border-radius:12px;
   margin-bottom:15px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.08);
 }
 
 .rekap-card{
@@ -96,24 +86,11 @@ input{
   border-radius:12px;
   margin-bottom:12px;
   box-shadow:0 3px 8px rgba(0,0,0,0.1);
-  font-size:14px;
 }
 
-.rekap-header{
-  font-weight:bold;
-  color:#c0392b;
-  margin-bottom:6px;
-}
-
-.rekap-total{
-  font-weight:bold;
-  margin-top:6px;
-  color:#27ae60;
-}
-
-.rekap-metode{
-  font-size:13px;
-  color:#555;
+@media print{
+  button,input{display:none;}
+  body{background:white;}
 }
 </style>
 </head>
@@ -123,31 +100,12 @@ input{
 <h2>🍜 Dimsum Beraga</h2>
 
 <div class="menu">
-<button onclick="tambah('Dimsum Ori Isi 4',13000)">Dimsum Ori Isi 4</button>
-<button onclick="tambah('Dimsum Ori Isi 6',19000)">Dimsum Ori Isi 6</button>
-<button onclick="tambah('Dimsum Ori Isi 8',24000)">Dimsum Ori Isi 8</button>
-<button onclick="tambah('Dimsum Mentai Isi 4',18000)">Dimsum Mentai Isi 4</button>
-<button onclick="tambah('Dimsum Mentai Isi 6',25000)">Dimsum Mentai Isi 6</button>
-<button onclick="tambah('Dimsum Mentai Isi 8',30000)">Dimsum Mentai Isi 8</button>
-<button onclick="tambah('Dimsum Cheese Mentai Isi 4',21000)">Dimsum Cheese Mentai Isi 4</button>
-<button onclick="tambah('Dimsum Cheese Mentai Isi 6',28000)">Dimsum Cheese Mentai Isi 6</button>
-<button onclick="tambah('Dimsum Cheese Mentai Isi 8',33000)">Dimsum Cheese Mentai Isi 8</button>
-<button onclick="tambah('Dimsum Bakar Isi 4',18000)">Dimsum Bakar Isi 4</button>
-<button onclick="tambah('Dimsum Bakar Isi 6',25000)">Dimsum Bakar Isi 6</button>
-<button onclick="tambah('Dimsum Bakar Isi 8',30000)">Dimsum Bakar Isi 8</button>
-<button onclick="tambah('Dimsum Cheese Bakar Isi 4',21000)">Dimsum Cheese Bakar Isi 4</button>
-<button onclick="tambah('Dimsum Cheese Bakar Isi 6',28000)">Dimsum Cheese Bakar Isi 6</button>
-<button onclick="tambah('Dimsum Cheese Bakar Isi 8',33000)">Dimsum Cheese Bakar Isi 8</button>
-<button onclick="tambah('Dimsum Kuah Creamy Isi 4',18000)">Dimsum Kuah Creamy Isi 4</button>
-<button onclick="tambah('Dimsum Kuah Creamy Isi 6',25000)">Dimsum Kuah Creamy Isi 6</button>
-<button onclick="tambah('Basreng Ori D Jrk K',8000)">Basreng Ori D Jrk K</button>
-<button onclick="tambah('Basreng Ori D Jrk B',12000)">Basreng Ori D Jrk B</button>
-<button onclick="tambah('Basreng CO D Jrk K',10000)">Basreng CO D Jrk K</button>
-<button onclick="tambah('Basreng CO D Jrk B',15000)">Basreng CO D Jrk B</button>
-<button onclick="tambah('Mie Jebew Beef Slice',12000)">Mie Jebew Beef Slice</button>
-<button onclick="tambah('Mie Jebew Beef Slice + B Urt',17000)">Mie Jebew Beef Slice + B Urt</button>
-<button onclick="tambah('Cheese',3000)">Cheese</button>
-<button onclick="tambah('Chili Oil',2000)">Chili Oil</button>
+<button onclick="tambah('Dimsum Ayam',15000)">Dimsum Ayam</button>
+<button onclick="tambah('Dimsum Udang',18000)">Dimsum Udang</button>
+<button onclick="tambah('Hakau',20000)">Hakau</button>
+<button onclick="tambah('Siomay Kepiting',17000)">Siomay Kepiting</button>
+<button onclick="tambah('Es Teh',5000)">Es Teh</button>
+<button onclick="tambah('Teh Hangat',4000)">Teh Hangat</button>
 </div>
 
 <table>
@@ -169,11 +127,8 @@ input{
 
 <button class="btn tunai" onclick="prosesPembayaran('Tunai')">💵 BAYAR TUNAI</button>
 <button class="btn qris" onclick="prosesPembayaran('QRIS')">📱 BAYAR QRIS</button>
-<button class="btn rekap" onclick="downloadPDF()">📄 DOWNLOAD REKAP PDF</button>
+<button class="btn print" onclick="window.print()">🖨 CETAK / SIMPAN PDF</button>
 <button class="btn reset" onclick="resetKasir()">RESET DATA</button>
-
-<h3>🧾 Nota Terakhir</h3>
-<div id="strukArea"></div>
 
 <h3>📊 Rekap Hari Ini</h3>
 <div id="rekapArea"></div>
@@ -184,7 +139,6 @@ let riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
 let totalHarian = parseInt(localStorage.getItem("totalHarian")) || 0;
 let totalTunai = parseInt(localStorage.getItem("totalTunai")) || 0;
 let totalQRIS = parseInt(localStorage.getItem("totalQRIS")) || 0;
-let lastStruk = localStorage.getItem("lastStruk") || "";
 let total = 0;
 
 function formatRupiah(angka){
@@ -197,7 +151,6 @@ function simpan(){
   localStorage.setItem("totalHarian", totalHarian);
   localStorage.setItem("totalTunai", totalTunai);
   localStorage.setItem("totalQRIS", totalQRIS);
-  localStorage.setItem("lastStruk", lastStruk);
 }
 
 function tambah(nama,harga){
@@ -239,28 +192,6 @@ function prosesPembayaran(metode){
   let waktu=new Date().toLocaleString();
   let pesananCopy=JSON.parse(JSON.stringify(data));
 
-  let detailStr="";
-  for(let item in pesananCopy){
-    detailStr+=`${item} (${pesananCopy[item].qty}x)<br>`;
-  }
-
-  lastStruk=`
-  <div class="struk">
-  <center><b>Dimsum Beraga</b></center>
-  ${waktu}<br><br>
-  ${detailStr}
-  ----------------<br>
-  Total: ${formatRupiah(total)}<br>
-  Bayar: ${formatRupiah(bayar)}<br>
-  Kembali: ${formatRupiah(kembalian)}<br>
-  Metode: ${metode}<br>
-  ----------------<br>
-  Terima Kasih 🙏
-  </div>
-  `;
-
-  document.getElementById("strukArea").innerHTML=lastStruk;
-
   riwayat.push({waktu,metode,total,pesanan:pesananCopy});
   totalHarian+=total;
   if(metode==="Tunai") totalTunai+=total;
@@ -277,61 +208,26 @@ function updateRekap(){
 
   let html=`
   <div class="summary-box">
-    <b>📊 Ringkasan Hari Ini</b><br><br>
+    <b>Ringkasan Hari Ini</b><br><br>
     Total Harian: ${formatRupiah(totalHarian)}<br>
-    💵 Tunai: ${formatRupiah(totalTunai)}<br>
-    📱 QRIS: ${formatRupiah(totalQRIS)}
+    Tunai: ${formatRupiah(totalTunai)}<br>
+    QRIS: ${formatRupiah(totalQRIS)}
   </div>
   `;
 
   riwayat.slice().reverse().forEach((trx,i)=>{
-    html+=`
-    <div class="rekap-card">
-      <div class="rekap-header">
-        🧾 Transaksi ${riwayat.length - i}
-      </div>
-      <div style="font-size:12px;color:#777;">
-        ${trx.waktu}
-      </div><br>
-    `;
-
+    html+=`<div class="rekap-card">
+    <b>Transaksi ${riwayat.length-i}</b><br>
+    <small>${trx.waktu}</small><br><br>`;
     for(let item in trx.pesanan){
-      html+=`• ${item} (${trx.pesanan[item].qty}x)<br>`;
+      html+=`${item} (${trx.pesanan[item].qty}x)<br>`;
     }
-
-    html+=`
-      <div class="rekap-metode">
-        Metode: ${trx.metode}
-      </div>
-      <div class="rekap-total">
-        Total: ${formatRupiah(trx.total)}
-      </div>
-    </div>
-    `;
+    html+=`<br>Metode: ${trx.metode}<br>
+    <b>Total: ${formatRupiah(trx.total)}</b>
+    </div>`;
   });
 
   document.getElementById("rekapArea").innerHTML=html;
-}
-
-function downloadPDF(){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF();
-  doc.text("Rekap Harian Dimsum Beraga",10,10);
-  let y=20;
-
-  riwayat.forEach((trx,i)=>{
-    doc.text(`${i+1}. ${trx.waktu}`,10,y); y+=8;
-    for(let item in trx.pesanan){
-      doc.text(`${item} (${trx.pesanan[item].qty}x)`,15,y);
-      y+=8;
-    }
-    doc.text(`Metode: ${trx.metode}`,10,y); y+=8;
-    doc.text(`Total: ${formatRupiah(trx.total)}`,10,y); y+=12;
-    if(y>270){ doc.addPage(); y=10; }
-  });
-
-  doc.text(`Total Harian: ${formatRupiah(totalHarian)}`,10,y+5);
-  doc.save("rekap_dimsum_beraga.pdf");
 }
 
 function resetKasir(){
@@ -341,9 +237,7 @@ function resetKasir(){
 
 render();
 updateRekap();
-document.getElementById("strukArea").innerHTML=lastStruk;
 </script>
 
 </body>
 </html>
-
