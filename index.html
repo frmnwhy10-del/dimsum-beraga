@@ -2,62 +2,64 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Kasir Dimsum Beraga</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kasir Dimsum Beraga Mobile PRO FINAL</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
-body { font-family: Arial; margin:0; padding:10px; background:#fff8f0; }
-h2 { text-align:center; color:#c0392b; font-size:20px; }
+body{font-family:Arial;margin:0;padding:10px;background:#fff8f0;}
+h2{text-align:center;color:#c0392b;}
 
-.menu button {
-  width:48%; margin:1%; padding:12px;
-  background:#e67e22; color:white; border:none;
-  border-radius:8px; font-size:14px;
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.menu button{
+padding:18px;font-size:16px;border:none;
+border-radius:10px;background:#e67e22;color:white;
 }
 
-table { width:100%; margin-top:10px; border-collapse:collapse; font-size:12px; }
-th, td { border:1px solid #ccc; padding:5px; text-align:center; }
+table{width:100%;margin-top:10px;font-size:14px;}
+th,td{border-bottom:1px solid #ddd;padding:5px;text-align:center;}
 
-.total { font-size:16px; font-weight:bold; margin-top:10px; }
+.total{font-size:20px;font-weight:bold;text-align:center;margin-top:10px;}
 
-button { padding:10px; margin-top:5px; width:100%; border:none; border-radius:8px; }
-
-.tunai { background:#27ae60; color:white; }
-.qris { background:#8e44ad; color:white; }
-.export { background:#2980b9; color:white; }
-.reset { background:#c0392b; color:white; }
-
-input, textarea {
-  width:100%; padding:8px; margin-top:5px;
-  border-radius:6px; border:1px solid #ccc;
+input{
+width:100%;padding:12px;font-size:16px;
+margin-top:10px;border-radius:8px;border:1px solid #ccc;
 }
 
-#nota {
-  background:white;
-  padding:10px;
-  margin-top:10px;
-  border:1px dashed black;
-  font-size:12px;
+.btn{
+width:100%;padding:18px;font-size:18px;
+border:none;border-radius:10px;margin-top:10px;color:white;
+}
+
+.tunai{background:#2980b9;}
+.qris{background:#8e44ad;}
+.rekap{background:#27ae60;}
+.reset{background:#c0392b;}
+
+.struk{
+background:white;margin-top:15px;
+padding:10px;border:1px dashed black;font-size:13px;
 }
 </style>
 </head>
+
 <body>
 
-<h2>🍜 Kasir Dimsum Beraga</h2>
+<h2>🍜 Dimsum Beraga</h2>
 
 <div class="menu">
-<button onclick="tambah('Dimsum Ayam',15000)">Dimsum Ayam - 15k</button>
-<button onclick="tambah('Dimsum Udang',18000)">Dimsum Udang - 18k</button>
-<button onclick="tambah('Hakau',20000)">Hakau - 20k</button>
-<button onclick="tambah('Siomay Kepiting',17000)">Siomay Kepiting - 17k</button>
-<button onclick="tambah('Es Teh',5000)">Es Teh - 5k</button>
-<button onclick="tambah('Teh Hangat',4000)">Teh Hangat - 4k</button>
+<button onclick="tambah('Dimsum Ayam',15000)">Dimsum Ayam</button>
+<button onclick="tambah('Dimsum Udang',18000)">Dimsum Udang</button>
+<button onclick="tambah('Hakau',20000)">Hakau</button>
+<button onclick="tambah('Siomay Kepiting',17000)">Siomay Kepiting</button>
+<button onclick="tambah('Es Teh',5000)">Es Teh</button>
+<button onclick="tambah('Teh Hangat',4000)">Teh Hangat</button>
 </div>
 
 <table>
 <thead>
 <tr>
 <th>Menu</th>
-<th>Harga</th>
 <th>Qty</th>
 <th>Subtotal</th>
 </tr>
@@ -65,141 +67,181 @@ input, textarea {
 <tbody id="tabel"></tbody>
 </table>
 
-<div class="total">Total: Rp <span id="total">0</span></div>
+<div class="total">Total: <span id="total">Rp 0</span></div>
 
-<textarea id="keterangan" placeholder="Keterangan Pesanan (contoh: pedas, tanpa bawang)"></textarea>
+<input type="number" id="uangBayar" placeholder="Uang bayar (untuk Tunai)">
 
-<input type="number" id="bayar" placeholder="Uang Bayar (jika tunai)" oninput="hitungKembalian()">
-<div>Kembalian: Rp <span id="kembalian">0</span></div>
+<div class="total">Kembalian: <span id="kembalian">Rp 0</span></div>
 
-<button class="tunai" onclick="prosesPembayaran('Tunai')">Bayar Tunai</button>
-<button class="qris" onclick="prosesPembayaran('QRIS')">Bayar QRIS</button>
+<button class="btn tunai" onclick="prosesPembayaran('Tunai')">💵 BAYAR TUNAI</button>
+<button class="btn qris" onclick="prosesPembayaran('QRIS')">📱 BAYAR QRIS</button>
+<button class="btn rekap" onclick="downloadPDF()">📄 DOWNLOAD REKAP PDF</button>
+<button class="btn reset" onclick="resetKasir()">RESET DATA</button>
 
-<button class="export" onclick="downloadRekap()">Download Rekap PDF</button>
-<button class="reset" onclick="resetKasir()">Reset Transaksi</button>
+<h3>🧾 Nota Terakhir</h3>
+<div id="strukArea"></div>
 
-<div id="nota"></div>
+<h3>📊 Rekap Hari Ini</h3>
+<div id="rekapArea"></div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("transaksiAktif")) || {};
-let rekap = JSON.parse(localStorage.getItem("rekapHarian")) || [];
+let data = JSON.parse(localStorage.getItem("data")) || {};
+let riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
+let totalHarian = parseInt(localStorage.getItem("totalHarian")) || 0;
+let totalTunai = parseInt(localStorage.getItem("totalTunai")) || 0;
+let totalQRIS = parseInt(localStorage.getItem("totalQRIS")) || 0;
+let lastStruk = localStorage.getItem("lastStruk") || "";
 let total = 0;
 
-render();
-
-function tambah(nama, harga) {
-    if (!data[nama]) {
-        data[nama] = { harga: harga, qty: 1 };
-    } else {
-        data[nama].qty += 1;
-    }
-    simpan();
-    render();
-}
-
-function render() {
-    let tabel = "";
-    total = 0;
-
-    for (let item in data) {
-        let subtotal = data[item].harga * data[item].qty;
-        total += subtotal;
-        tabel += `<tr>
-            <td>${item}</td>
-            <td>${data[item].harga}</td>
-            <td>${data[item].qty}</td>
-            <td>${subtotal}</td>
-        </tr>`;
-    }
-
-    document.getElementById("tabel").innerHTML = tabel;
-    document.getElementById("total").innerText = total;
-    tampilkanNota();
-}
-
-function hitungKembalian(){
-    let bayar = document.getElementById("bayar").value;
-    let kembali = bayar - total;
-    document.getElementById("kembalian").innerText = kembali > 0 ? kembali : 0;
-}
-
-function prosesPembayaran(metode){
-    if(total === 0) return alert("Belum ada pesanan!");
-
-    let waktu = new Date().toLocaleString();
-    let keterangan = document.getElementById("keterangan").value;
-    let bayar = document.getElementById("bayar").value || 0;
-    let kembali = bayar - total;
-
-    rekap.push({
-        waktu,
-        pesanan: JSON.parse(JSON.stringify(data)),
-        total,
-        metode,
-        bayar,
-        kembali,
-        keterangan
-    });
-
-    localStorage.setItem("rekapHarian", JSON.stringify(rekap));
-    alert("Pembayaran berhasil!");
-
-    resetKasir();
-}
-
-function tampilkanNota(){
-    let isi = `<b>=== NOTA ===</b><br>`;
-    for(let item in data){
-        isi += `${item} x${data[item].qty}<br>`;
-    }
-    isi += `----------------<br>`;
-    isi += `Total: Rp ${total}<br>`;
-    isi += `==============`;
-    document.getElementById("nota").innerHTML = isi;
-}
-
-function downloadRekap(){
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    doc.text("REKAP HARIAN DIMSUM BERAGA",10,10);
-
-    let y = 20;
-    let totalHarian = 0;
-
-    rekap.forEach((trx,i)=>{
-        doc.text(`${i+1}. ${trx.waktu}`,10,y); y+=7;
-        for(let item in trx.pesanan){
-            let sub = trx.pesanan[item].harga * trx.pesanan[item].qty;
-            doc.text(`- ${item} x${trx.pesanan[item].qty} = ${sub}`,15,y);
-            y+=7;
-        }
-        doc.text(`Keterangan: ${trx.keterangan}`,15,y); y+=7;
-        doc.text(`Metode: ${trx.metode}`,15,y); y+=7;
-        doc.text(`Total: Rp ${trx.total}`,15,y); y+=10;
-
-        totalHarian += trx.total;
-        if(y > 270){ doc.addPage(); y=10; }
-    });
-
-    doc.text(`TOTAL PENGHASILAN HARI INI: Rp ${totalHarian}`,10,y+10);
-
-    doc.save("rekap_harian_dimsum.pdf");
-}
-
-function resetKasir(){
-    data = {};
-    total = 0;
-    document.getElementById("bayar").value="";
-    document.getElementById("kembalian").innerText="0";
-    document.getElementById("keterangan").value="";
-    simpan();
-    render();
+function formatRupiah(angka){
+  return "Rp " + angka.toLocaleString("id-ID");
 }
 
 function simpan(){
-    localStorage.setItem("transaksiAktif", JSON.stringify(data));
+  localStorage.setItem("data", JSON.stringify(data));
+  localStorage.setItem("riwayat", JSON.stringify(riwayat));
+  localStorage.setItem("totalHarian", totalHarian);
+  localStorage.setItem("totalTunai", totalTunai);
+  localStorage.setItem("totalQRIS", totalQRIS);
+  localStorage.setItem("lastStruk", lastStruk);
 }
+
+function tambah(nama,harga){
+  if(!data[nama]) data[nama]={harga:harga,qty:1};
+  else data[nama].qty++;
+  render();
+  simpan();
+}
+
+function render(){
+  let html=""; total=0;
+  for(let item in data){
+    let subtotal=data[item].harga*data[item].qty;
+    total+=subtotal;
+    html+=`
+      <tr>
+        <td>${item}</td>
+        <td>${data[item].qty}</td>
+        <td>${formatRupiah(subtotal)}</td>
+      </tr>`;
+  }
+  document.getElementById("tabel").innerHTML=html;
+  document.getElementById("total").innerText=formatRupiah(total);
+}
+
+function prosesPembayaran(metode){
+  if(total===0) return alert("Belum ada pesanan!");
+
+  let bayar=parseInt(document.getElementById("uangBayar").value)||0;
+  let kembalian=0;
+
+  if(metode==="Tunai"){
+    if(bayar<total) return alert("Uang kurang!");
+    kembalian=bayar-total;
+  }
+
+  document.getElementById("kembalian").innerText=formatRupiah(kembalian);
+
+  let waktu=new Date().toLocaleString();
+
+  let pesananCopy=JSON.parse(JSON.stringify(data));
+
+  let detailStr="";
+  for(let item in pesananCopy){
+    detailStr+=`${item} (${pesananCopy[item].qty}x)<br>`;
+  }
+
+  lastStruk=`
+    <div class="struk">
+    <center><b>Dimsum Beraga</b></center>
+    ${waktu}<br><br>
+    ${detailStr}
+    ----------------<br>
+    Total: ${formatRupiah(total)}<br>
+    Bayar: ${formatRupiah(bayar)}<br>
+    Kembali: ${formatRupiah(kembalian)}<br>
+    Metode: ${metode}<br>
+    ----------------<br>
+    Terima Kasih 🙏
+    </div>
+  `;
+
+  document.getElementById("strukArea").innerHTML=lastStruk;
+
+  riwayat.push({
+    waktu:waktu,
+    metode:metode,
+    total:total,
+    pesanan:pesananCopy
+  });
+
+  totalHarian+=total;
+  if(metode==="Tunai") totalTunai+=total;
+  else totalQRIS+=total;
+
+  data={};
+  document.getElementById("uangBayar").value="";
+  render();
+  updateRekap();
+  simpan();
+}
+
+function updateRekap(){
+  let html=`
+  Total Harian: ${formatRupiah(totalHarian)}<br>
+  Tunai: ${formatRupiah(totalTunai)}<br>
+  QRIS: ${formatRupiah(totalQRIS)}<br><br>
+  <b>Detail Transaksi:</b><br><br>
+  `;
+
+  riwayat.forEach((trx,i)=>{
+    html+=`${i+1}. ${trx.waktu}<br>`;
+    for(let item in trx.pesanan){
+      html+=`${item} (${trx.pesanan[item].qty}x)<br>`;
+    }
+    html+=`
+    Metode: ${trx.metode}<br>
+    Total: ${formatRupiah(trx.total)}<br>
+    ----------------<br>
+    `;
+  });
+
+  document.getElementById("rekapArea").innerHTML=html;
+}
+
+function downloadPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  doc.text("Rekap Harian Dimsum Beraga",10,10);
+
+  let y=20;
+
+  riwayat.forEach((trx,i)=>{
+    doc.text(`${i+1}. ${trx.waktu}`,10,y); y+=8;
+
+    for(let item in trx.pesanan){
+      doc.text(`${item} (${trx.pesanan[item].qty}x)`,15,y);
+      y+=8;
+    }
+
+    doc.text(`Metode: ${trx.metode}`,10,y); y+=8;
+    doc.text(`Total: ${formatRupiah(trx.total)}`,10,y); y+=12;
+
+    if(y>270){ doc.addPage(); y=10; }
+  });
+
+  doc.text(`Total Harian: ${formatRupiah(totalHarian)}`,10,y+5);
+  doc.save("rekap_dimsum_beraga.pdf");
+}
+
+function resetKasir(){
+  localStorage.clear();
+  location.reload();
+}
+
+render();
+updateRekap();
+document.getElementById("strukArea").innerHTML=lastStruk;
 </script>
 
 </body>
