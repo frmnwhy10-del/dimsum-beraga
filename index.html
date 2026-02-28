@@ -1,126 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Kasir Dimsum Beraga</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body { font-family: Arial; padding: 15px; background:#fff8f0; }
+h2 { text-align:center; color:#c0392b; }
+.menu button {
+  width:48%; margin:1%; padding:10px;
+  background:#e67e22; color:white; border:none;
+}
+table { width:100%; margin-top:10px; border-collapse:collapse; }
+th, td { border:1px solid #ccc; padding:5px; text-align:center; }
+.total { font-size:18px; font-weight:bold; margin-top:10px; }
+button { padding:10px; margin-top:5px; width:100%; border:none; }
+.export { background:#27ae60; color:white; }
+.reset { background:#c0392b; color:white; }
+</style>
+</head>
+<body>
+
+<h2>🍜 Kasir Dimsum Beraga</h2>
+
+<div class="menu">
+<button onclick="tambah('Dimsum Ayam',15000)">Dimsum Ayam - 15k</button>
+<button onclick="tambah('Dimsum Udang',18000)">Dimsum Udang - 18k</button>
+<button onclick="tambah('Hakau',20000)">Hakau - 20k</button>
+<button onclick="tambah('Siomay Kepiting',17000)">Siomay Kepiting - 17k</button>
+<button onclick="tambah('Es Teh',5000)">Es Teh - 5k</button>
+<button onclick="tambah('Teh Hangat',4000)">Teh Hangat - 4k</button>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Menu</th>
+<th>Harga</th>
+<th>Qty</th>
+<th>Subtotal</th>
+</tr>
+</thead>
+<tbody id="tabel"></tbody>
+</table>
+
+<div class="total">Total: Rp <span id="total">0</span></div>
+
+<button class="export" onclick="downloadPDF()">Download Rekap PDF</button>
+<button class="reset" onclick="resetKasir()">Reset Transaksi</button>
+
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+let data = {};
+let total = 0;
 
-  let totalTunai = 0;
-  let totalQR = 0;
-  let transaksi = [];
-  let menuDipilih = null;
-
-  // ================== DAFTAR MENU ==================
-  const daftarMenu = [
-    { nama: "Dimsum Ayam", harga: 15000 },
-    { nama: "Dimsum Udang", harga: 18000 },
-    { nama: "Lumpia", harga: 12000 },
-    { nama: "Siomay", harga: 14000 },
-    { nama: "Es Teh", harga: 5000 }
-  ];
-
-  // ================== SIMPAN DATA ==================
-  function simpanData() {
-    localStorage.setItem("totalTunai", totalTunai);
-    localStorage.setItem("totalQR", totalQR);
-    localStorage.setItem("transaksi", JSON.stringify(transaksi));
-  }
-
-  // ================== LOAD DATA ==================
-  function loadData() {
-    totalTunai = parseInt(localStorage.getItem("totalTunai")) || 0;
-    totalQR = parseInt(localStorage.getItem("totalQR")) || 0;
-    transaksi = JSON.parse(localStorage.getItem("transaksi")) || [];
-
-    document.getElementById("totalTunai").innerText = totalTunai;
-    document.getElementById("totalQR").innerText = totalQR;
-    document.getElementById("totalOmzet").innerText = totalTunai + totalQR;
-  }
-
-  // ================== TANGGAL & JAM ==================
-  const sekarang = new Date();
-
-  if (!localStorage.getItem("jamBuka")) {
-    localStorage.setItem("jamBuka", sekarang.toLocaleTimeString());
-    localStorage.setItem("tanggal", sekarang.toLocaleDateString());
-  }
-
-  document.getElementById("tanggal").innerText =
-    localStorage.getItem("tanggal");
-
-  document.getElementById("jamBuka").innerText =
-    localStorage.getItem("jamBuka");
-
-  document.getElementById("jamTutup").innerText =
-    localStorage.getItem("jamTutup") || "-";
-
-  // ================== TAMPILKAN MENU ==================
-  function tampilkanMenu() {
-    const container = document.getElementById("menuContainer");
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    daftarMenu.forEach(function (item) {
-      const btn = document.createElement("button");
-      btn.innerText = item.nama + " - Rp " + item.harga;
-      btn.style.width = "100%";
-      btn.style.marginBottom = "5px";
-      btn.style.padding = "10px";
-      btn.style.borderRadius = "8px";
-      btn.style.background = "#f4f4f4";
-
-      btn.onclick = function () {
-        menuDipilih = item;
-        alert("Menu dipilih: " + item.nama);
-      };
-
-      container.appendChild(btn);
-    });
-  }
-
-  // ================== BAYAR ==================
-  window.bayar = function (metode) {
-    if (!menuDipilih) {
-      alert("Pilih menu dulu!");
-      return;
-    }
-
-    const total = menuDipilih.harga;
-
-    if (metode === "Tunai") {
-      totalTunai += total;
+function tambah(nama, harga) {
+    if (!data[nama]) {
+        data[nama] = { harga: harga, qty: 1 };
     } else {
-      totalQR += total;
+        data[nama].qty += 1;
+    }
+    render();
+}
+
+function render() {
+    let tabel = "";
+    total = 0;
+    for (let item in data) {
+        let subtotal = data[item].harga * data[item].qty;
+        total += subtotal;
+        tabel += `<tr>
+            <td>${item}</td>
+            <td>${data[item].harga}</td>
+            <td>${data[item].qty}</td>
+            <td>${subtotal}</td>
+        </tr>`;
+    }
+    document.getElementById("tabel").innerHTML = tabel;
+    document.getElementById("total").innerText = total;
+}
+
+function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.text("Dimsum Beraga", 10, 10);
+    doc.text("Rekap Transaksi", 10, 20);
+
+    let y = 30;
+    for (let item in data) {
+        let subtotal = data[item].harga * data[item].qty;
+        doc.text(`${item} - ${data[item].qty} x ${data[item].harga} = ${subtotal}`, 10, y);
+        y += 10;
     }
 
-    transaksi.push({
-      nama: menuDipilih.nama,
-      metode: metode,
-      total: total
-    });
+    doc.text(`Total: Rp ${total}`, 10, y + 10);
+    doc.save("rekap_dimsum_beraga.pdf");
+}
 
-    document.getElementById("totalTunai").innerText = totalTunai;
-    document.getElementById("totalQR").innerText = totalQR;
-    document.getElementById("totalOmzet").innerText =
-      totalTunai + totalQR;
-
-    menuDipilih = null;
-    simpanData();
-  };
-
-  // ================== TUTUP TOKO ==================
-  window.tutupToko = function () {
-    const tutup = new Date().toLocaleTimeString();
-    localStorage.setItem("jamTutup", tutup);
-    document.getElementById("jamTutup").innerText = tutup;
-  };
-
-  // ================== RESET ==================
-  window.resetData = function () {
-    localStorage.clear();
-    location.reload();
-  };
-
-  // ================== INIT ==================
-  loadData();
-  tampilkanMenu();
-
-});
+function resetKasir() {
+    data = {};
+    total = 0;
+    render();
+}
 </script>
+
+</body>
+</html>
