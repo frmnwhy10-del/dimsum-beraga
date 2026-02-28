@@ -1,10 +1,11 @@
 <script>
+document.addEventListener("DOMContentLoaded", function() {
+
 let totalTunai = 0;
 let totalQR = 0;
 let transaksi = [];
 let menuDipilih = null;
 
-/* ================= MENU LIST ================= */
 let daftarMenu = [
   {nama: "Dimsum Ayam", harga: 15000},
   {nama: "Dimsum Udang", harga: 18000},
@@ -13,14 +14,12 @@ let daftarMenu = [
   {nama: "Es Teh", harga: 5000}
 ];
 
-/* ================= SIMPAN DATA ================= */
 function simpanData(){
   localStorage.setItem("totalTunai", totalTunai);
   localStorage.setItem("totalQR", totalQR);
   localStorage.setItem("transaksi", JSON.stringify(transaksi));
 }
 
-/* ================= LOAD DATA ================= */
 function loadData(){
   totalTunai = parseInt(localStorage.getItem("totalTunai")) || 0;
   totalQR = parseInt(localStorage.getItem("totalQR")) || 0;
@@ -31,7 +30,6 @@ function loadData(){
   document.getElementById("totalOmzet").innerText = totalTunai + totalQR;
 }
 
-/* ================= TANGGAL & JAM ================= */
 let sekarang = new Date();
 
 if(!localStorage.getItem("jamBuka")){
@@ -43,10 +41,9 @@ document.getElementById("tanggal").innerText = localStorage.getItem("tanggal");
 document.getElementById("jamBuka").innerText = localStorage.getItem("jamBuka");
 document.getElementById("jamTutup").innerText = localStorage.getItem("jamTutup") || "-";
 
-/* ================= TAMPILKAN MENU ================= */
 function tampilkanMenu(){
   let container = document.getElementById("menuContainer");
-  container.innerHTML = "";
+  if(!container) return;
 
   daftarMenu.forEach(item => {
     let btn = document.createElement("button");
@@ -69,8 +66,7 @@ function tampilkanMenu(){
 loadData();
 tampilkanMenu();
 
-/* ================= BAYAR ================= */
-function bayar(metode){
+window.bayar = function(metode){
   if(!menuDipilih){
     alert("Pilih menu dulu!");
     return;
@@ -96,18 +92,18 @@ function bayar(metode){
 
   menuDipilih = null;
   simpanData();
-}
+};
 
-/* ================= TUTUP TOKO ================= */
-function tutupToko(){
+window.tutupToko = function(){
   let tutup = new Date().toLocaleTimeString();
   localStorage.setItem("jamTutup", tutup);
   document.getElementById("jamTutup").innerText = tutup;
-}
+};
 
-/* ================= RESET ================= */
-function resetData(){
+window.resetData = function(){
   localStorage.clear();
   location.reload();
-}
+};
+
+});
 </script>
