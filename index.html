@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kasir Dimsum Beraga - Mobile</title>
+<title>Kasir Dimsum Beraga Mobile PRO</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
@@ -14,20 +14,17 @@ body{
   background:#fff8f0;
 }
 
-h2{
-  text-align:center;
-  color:#c0392b;
-}
+h2{text-align:center;color:#c0392b;}
 
 .menu{
   display:grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns:1fr 1fr;
   gap:10px;
 }
 
 .menu button{
-  padding:20px;
-  font-size:18px;
+  padding:18px;
+  font-size:16px;
   border:none;
   border-radius:10px;
   background:#e67e22;
@@ -47,7 +44,7 @@ th,td{
 }
 
 .total{
-  font-size:22px;
+  font-size:20px;
   font-weight:bold;
   text-align:center;
   margin-top:10px;
@@ -55,33 +52,34 @@ th,td{
 
 input{
   width:100%;
-  padding:15px;
-  font-size:18px;
+  padding:12px;
+  font-size:16px;
   margin-top:10px;
   border-radius:8px;
   border:1px solid #ccc;
 }
 
-.bayar-btn{
+.btn{
   width:100%;
-  padding:20px;
-  font-size:20px;
+  padding:18px;
+  font-size:18px;
   border:none;
   border-radius:10px;
   margin-top:10px;
   color:white;
 }
 
-.tunai{ background:#2980b9; }
-.qris{ background:#8e44ad; }
-.reset{ background:#c0392b; }
+.tunai{background:#2980b9;}
+.qris{background:#8e44ad;}
+.rekap{background:#27ae60;}
+.reset{background:#c0392b;}
 
 .struk{
   background:white;
   margin-top:15px;
   padding:10px;
   border:1px dashed black;
-  font-size:14px;
+  font-size:13px;
 }
 </style>
 </head>
@@ -112,20 +110,28 @@ input{
 
 <div class="total">Total: <span id="total">Rp 0</span></div>
 
-<input type="number" id="uangBayar" placeholder="Masukkan uang bayar (Tunai)">
+<input type="number" id="uangBayar" placeholder="Uang bayar (untuk Tunai)">
 
-<button class="bayar-btn tunai" onclick="prosesPembayaran('Tunai')">💵 BAYAR TUNAI</button>
-<button class="bayar-btn qris" onclick="prosesPembayaran('QRIS')">📱 BAYAR QRIS</button>
-<button class="bayar-btn reset" onclick="resetKasir()">RESET DATA</button>
+<button class="btn tunai" onclick="prosesPembayaran('Tunai')">💵 BAYAR TUNAI</button>
+<button class="btn qris" onclick="prosesPembayaran('QRIS')">📱 BAYAR QRIS</button>
+<button class="btn rekap" onclick="downloadPDF()">📄 DOWNLOAD REKAP PDF</button>
+<button class="btn reset" onclick="resetKasir()">RESET DATA</button>
 
 <div class="total">Kembalian: <span id="kembalian">Rp 0</span></div>
 
-<h3>🧾 Struk</h3>
+<h3>🧾 Nota Terakhir</h3>
 <div id="strukArea"></div>
+
+<h3>📊 Rekap Hari Ini</h3>
+<div id="rekapArea"></div>
 
 <script>
 let data = JSON.parse(localStorage.getItem("data")) || {};
+let riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
 let totalHarian = parseInt(localStorage.getItem("totalHarian")) || 0;
+let totalTunai = parseInt(localStorage.getItem("totalTunai")) || 0;
+let totalQRIS = parseInt(localStorage.getItem("totalQRIS")) || 0;
+let lastStruk = localStorage.getItem("lastStruk") || "";
 let total = 0;
 
 function formatRupiah(angka){
@@ -134,7 +140,11 @@ function formatRupiah(angka){
 
 function simpan(){
   localStorage.setItem("data", JSON.stringify(data));
+  localStorage.setItem("riwayat", JSON.stringify(riwayat));
   localStorage.setItem("totalHarian", totalHarian);
+  localStorage.setItem("totalTunai", totalTunai);
+  localStorage.setItem("totalQRIS", totalQRIS);
+  localStorage.setItem("lastStruk", lastStruk);
 }
 
 function tambah(nama,harga){
@@ -145,8 +155,7 @@ function tambah(nama,harga){
 }
 
 function render(){
-  let html="";
-  total=0;
+  let html=""; total=0;
   for(let item in data){
     let subtotal=data[item].harga*data[item].qty;
     total+=subtotal;
@@ -180,7 +189,7 @@ function prosesPembayaran(metode){
     detail+=`${item} (${data[item].qty}x)<br>`;
   }
 
-  document.getElementById("strukArea").innerHTML=`
+  lastStruk=`
     <div class="struk">
     <center><b>Dimsum Beraga</b></center>
     ${waktu}<br><br>
@@ -195,11 +204,55 @@ function prosesPembayaran(metode){
     </div>
   `;
 
+  document.getElementById("strukArea").innerHTML=lastStruk;
+
+  riwayat.push({waktu,metode,total,detail});
   totalHarian+=total;
+  if(metode==="Tunai") totalTunai+=total;
+  else totalQRIS+=total;
+
   data={};
   document.getElementById("uangBayar").value="";
   render();
+  updateRekap();
   simpan();
+}
+
+function updateRekap(){
+  let html=`
+  Total Harian: ${formatRupiah(totalHarian)}<br>
+  Tunai: ${formatRupiah(totalTunai)}<br>
+  QRIS: ${formatRupiah(totalQRIS)}<br><br>
+  <b>Detail Transaksi:</b><br><br>
+  `;
+
+  riwayat.forEach((trx,i)=>{
+    html+=`
+    ${i+1}. ${trx.waktu}<br>
+    ${trx.detail}
+    Metode: ${trx.metode}<br>
+    Total: ${formatRupiah(trx.total)}<br>
+    ----------------<br>
+    `;
+  });
+
+  document.getElementById("rekapArea").innerHTML=html;
+}
+
+function downloadPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  doc.text("Rekap Harian Dimsum Beraga",10,10);
+  let y=20;
+
+  riwayat.forEach((trx,i)=>{
+    doc.text(`${i+1}. ${trx.waktu}`,10,y); y+=8;
+    doc.text(`Metode: ${trx.metode} | Total: ${formatRupiah(trx.total)}`,10,y); y+=8;
+    y+=5;
+  });
+
+  doc.text(`Total Harian: ${formatRupiah(totalHarian)}`,10,y+5);
+  doc.save("rekap_dimsum_beraga.pdf");
 }
 
 function resetKasir(){
@@ -208,6 +261,8 @@ function resetKasir(){
 }
 
 render();
+updateRekap();
+document.getElementById("strukArea").innerHTML=lastStruk;
 </script>
 
 </body>
