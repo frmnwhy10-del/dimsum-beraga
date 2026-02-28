@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Kasir Dimsum Beraga</title>
+<title>Kasir Dimsum Beraga PRO</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
@@ -25,7 +25,18 @@ button { padding:10px; margin-top:5px; width:100%; border:none; }
 .reset { background:#c0392b; color:white; }
 .bayar { background:#2980b9; color:white; }
 
-select { padding:8px; width:100%; margin-top:5px; }
+select, input {
+  padding:8px; width:100%; margin-top:5px;
+}
+
+.struk {
+  background:white;
+  border:1px dashed black;
+  padding:10px;
+  margin-top:15px;
+  font-size:12px;
+}
+
 hr { border:1px solid #ddd; }
 </style>
 </head>
@@ -35,12 +46,12 @@ hr { border:1px solid #ddd; }
 <h2>🍜 Kasir Dimsum Beraga</h2>
 
 <div class="menu">
-<button onclick="tambah('Dimsum Ayam',15000)">Dimsum Ayam - 15k</button>
-<button onclick="tambah('Dimsum Udang',18000)">Dimsum Udang - 18k</button>
-<button onclick="tambah('Hakau',20000)">Hakau - 20k</button>
-<button onclick="tambah('Siomay Kepiting',17000)">Siomay Kepiting - 17k</button>
-<button onclick="tambah('Es Teh',5000)">Es Teh - 5k</button>
-<button onclick="tambah('Teh Hangat',4000)">Teh Hangat - 4k</button>
+<button onclick="tambah('Dimsum Ayam',15000)">Dimsum Ayam</button>
+<button onclick="tambah('Dimsum Udang',18000)">Dimsum Udang</button>
+<button onclick="tambah('Hakau',20000)">Hakau</button>
+<button onclick="tambah('Siomay Kepiting',17000)">Siomay Kepiting</button>
+<button onclick="tambah('Es Teh',5000)">Es Teh</button>
+<button onclick="tambah('Teh Hangat',4000)">Teh Hangat</button>
 </div>
 
 <table>
@@ -55,154 +66,176 @@ hr { border:1px solid #ddd; }
 <tbody id="tabel"></tbody>
 </table>
 
-<div class="total">Total: Rp <span id="total">0</span></div>
+<div class="total">Total: <span id="total">Rp 0</span></div>
 
 <select id="metode">
 <option value="Tunai">Tunai</option>
 <option value="QRIS">QRIS</option>
 </select>
 
+<input type="number" id="uangBayar" placeholder="Masukkan Uang Bayar">
+
+<div class="total">Kembalian: <span id="kembalian">Rp 0</span></div>
+
 <button class="bayar" onclick="prosesPembayaran()">Proses Pembayaran</button>
-<button class="export" onclick="downloadPDF()">Download Rekap Harian PDF</button>
+<button class="export" onclick="downloadPDF()">Download Rekap PDF</button>
 <button class="reset" onclick="resetKasir()">Reset Semua Data</button>
 
 <h3>📊 Rekap Hari Ini</h3>
-<p>Total Penghasilan: Rp <span id="totalHarian">0</span></p>
-<p>Total Tunai: Rp <span id="totalTunai">0</span></p>
-<p>Total QRIS: Rp <span id="totalQRIS">0</span></p>
+<p>Total Penghasilan: <span id="totalHarian">Rp 0</span></p>
+<p>Total Tunai: <span id="totalTunai">Rp 0</span></p>
+<p>Total QRIS: <span id="totalQRIS">Rp 0</span></p>
 
 <h3>🧾 Detail Transaksi</h3>
 <div id="detailRekap"></div>
 
+<h3>🧾 Struk Terakhir</h3>
+<div id="strukArea"></div>
+
 <script>
-let data = {};
+let data = JSON.parse(localStorage.getItem("data")) || {};
+let riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
+let totalHarian = parseInt(localStorage.getItem("totalHarian")) || 0;
+let totalTunai = parseInt(localStorage.getItem("totalTunai")) || 0;
+let totalQRIS = parseInt(localStorage.getItem("totalQRIS")) || 0;
 let total = 0;
 
-let riwayat = [];
-let totalHarian = 0;
-let totalTunai = 0;
-let totalQRIS = 0;
+function formatRupiah(angka) {
+  return "Rp " + angka.toLocaleString("id-ID");
+}
+
+function simpanLocal() {
+  localStorage.setItem("data", JSON.stringify(data));
+  localStorage.setItem("riwayat", JSON.stringify(riwayat));
+  localStorage.setItem("totalHarian", totalHarian);
+  localStorage.setItem("totalTunai", totalTunai);
+  localStorage.setItem("totalQRIS", totalQRIS);
+}
 
 function tambah(nama, harga) {
-    if (!data[nama]) {
-        data[nama] = { harga: harga, qty: 1 };
-    } else {
-        data[nama].qty += 1;
-    }
-    render();
+  if (!data[nama]) {
+    data[nama] = { harga: harga, qty: 1 };
+  } else {
+    data[nama].qty += 1;
+  }
+  render();
+  simpanLocal();
 }
 
 function render() {
-    let tabel = "";
-    total = 0;
+  let tabel = "";
+  total = 0;
 
-    for (let item in data) {
-        let subtotal = data[item].harga * data[item].qty;
-        total += subtotal;
+  for (let item in data) {
+    let subtotal = data[item].harga * data[item].qty;
+    total += subtotal;
 
-        tabel += `<tr>
-            <td>${item}</td>
-            <td>${data[item].harga}</td>
-            <td>${data[item].qty}</td>
-            <td>${subtotal}</td>
-        </tr>`;
-    }
+    tabel += `<tr>
+      <td>${item}</td>
+      <td>${formatRupiah(data[item].harga)}</td>
+      <td>${data[item].qty}</td>
+      <td>${formatRupiah(subtotal)}</td>
+    </tr>`;
+  }
 
-    document.getElementById("tabel").innerHTML = tabel;
-    document.getElementById("total").innerText = total;
+  document.getElementById("tabel").innerHTML = tabel;
+  document.getElementById("total").innerText = formatRupiah(total);
 }
 
 function prosesPembayaran() {
-    if (total === 0) {
-        alert("Belum ada pesanan!");
-        return;
-    }
+  if (total === 0) return alert("Belum ada pesanan!");
 
-    let metode = document.getElementById("metode").value;
-    let waktu = new Date().toLocaleString();
+  let metode = document.getElementById("metode").value;
+  let bayar = parseInt(document.getElementById("uangBayar").value) || 0;
 
-    let detailPesanan = "";
-    for (let item in data) {
-        detailPesanan += `${item} (${data[item].qty}x), `;
-    }
+  if (metode === "Tunai" && bayar < total)
+    return alert("Uang kurang!");
 
-    riwayat.push({
-        waktu: waktu,
-        metode: metode,
-        total: total,
-        detail: detailPesanan
-    });
+  let kembalian = metode === "Tunai" ? bayar - total : 0;
+  document.getElementById("kembalian").innerText = formatRupiah(kembalian);
 
-    totalHarian += total;
+  let waktu = new Date().toLocaleString();
 
-    if (metode === "Tunai") {
-        totalTunai += total;
-    } else {
-        totalQRIS += total;
-    }
+  let detailPesanan = "";
+  for (let item in data) {
+    detailPesanan += `${item} (${data[item].qty}x), `;
+  }
 
-    updateRekap();
+  riwayat.push({ waktu, metode, total, detail: detailPesanan });
 
-    data = {};
-    total = 0;
-    render();
+  totalHarian += total;
+  if (metode === "Tunai") totalTunai += total;
+  else totalQRIS += total;
+
+  tampilStruk(waktu, metode, detailPesanan, total, bayar, kembalian);
+
+  data = {};
+  document.getElementById("uangBayar").value = "";
+  render();
+  updateRekap();
+  simpanLocal();
+}
+
+function tampilStruk(waktu, metode, detail, total, bayar, kembalian) {
+  let html = `
+  <div class="struk">
+  <center><b>Dimsum Beraga</b></center>
+  <hr>
+  ${waktu}<br>
+  ${detail}<br>
+  ----------------------<br>
+  Total: ${formatRupiah(total)}<br>
+  Bayar: ${formatRupiah(bayar)}<br>
+  Kembali: ${formatRupiah(kembalian)}<br>
+  Metode: ${metode}<br>
+  <hr>
+  Terima Kasih 🙏
+  </div>
+  `;
+  document.getElementById("strukArea").innerHTML = html;
 }
 
 function updateRekap() {
-    document.getElementById("totalHarian").innerText = totalHarian;
-    document.getElementById("totalTunai").innerText = totalTunai;
-    document.getElementById("totalQRIS").innerText = totalQRIS;
+  document.getElementById("totalHarian").innerText = formatRupiah(totalHarian);
+  document.getElementById("totalTunai").innerText = formatRupiah(totalTunai);
+  document.getElementById("totalQRIS").innerText = formatRupiah(totalQRIS);
 
-    let html = "";
-    riwayat.forEach((trx, index) => {
-        html += `
-        <p>
-        <b>${index+1}.</b> ${trx.waktu}<br>
-        Pesanan: ${trx.detail}<br>
-        Metode: ${trx.metode}<br>
-        Total: Rp ${trx.total}
-        </p>
-        <hr>`;
-    });
-
-    document.getElementById("detailRekap").innerHTML = html;
+  let html = "";
+  riwayat.forEach((trx, i) => {
+    html += `
+    <p>
+    <b>${i+1}.</b> ${trx.waktu}<br>
+    Pesanan: ${trx.detail}<br>
+    Metode: ${trx.metode}<br>
+    Total: ${formatRupiah(trx.total)}
+    </p><hr>`;
+  });
+  document.getElementById("detailRekap").innerHTML = html;
 }
 
 function downloadPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.text("Rekap Harian Dimsum Beraga", 10, 10);
 
-    doc.text("Dimsum Beraga", 10, 10);
-    doc.text("Rekap Transaksi Harian", 10, 20);
+  let y = 20;
+  riwayat.forEach((trx, i) => {
+    doc.text(`${i+1}. ${trx.waktu}`, 10, y); y+=8;
+    doc.text(`Pesanan: ${trx.detail}`, 10, y); y+=8;
+    doc.text(`Metode: ${trx.metode} | Total: ${formatRupiah(trx.total)}`, 10, y); y+=12;
+  });
 
-    let y = 30;
-
-    riwayat.forEach((trx, index) => {
-        doc.text(`${index+1}. ${trx.waktu}`, 10, y);
-        y += 8;
-        doc.text(`Pesanan: ${trx.detail}`, 10, y);
-        y += 8;
-        doc.text(`Metode: ${trx.metode} | Total: Rp ${trx.total}`, 10, y);
-        y += 12;
-    });
-
-    doc.text(`Total Harian: Rp ${totalHarian}`, 10, y + 5);
-    doc.text(`Tunai: Rp ${totalTunai}`, 10, y + 12);
-    doc.text(`QRIS: Rp ${totalQRIS}`, 10, y + 19);
-
-    doc.save("rekap_harian_dimsum_beraga.pdf");
+  doc.text(`Total Harian: ${formatRupiah(totalHarian)}`, 10, y+5);
+  doc.save("rekap_dimsum_beraga.pdf");
 }
 
 function resetKasir() {
-    data = {};
-    riwayat = [];
-    total = 0;
-    totalHarian = 0;
-    totalTunai = 0;
-    totalQRIS = 0;
-    render();
-    updateRekap();
+  localStorage.clear();
+  location.reload();
 }
+
+render();
+updateRekap();
 </script>
 
 </body>
